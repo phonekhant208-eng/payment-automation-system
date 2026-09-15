@@ -1,0 +1,595 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -976,
+        1088
+      ],
+      "id": "ce334575-f03d-489c-a988-6abdb625dc3a",
+      "name": "Telegram Trigger",
+      "webhookId": "0ff45c90-92a5-4aea-9979-3f4a746b3e04",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 1. Generate a secure, unique 6-digit access key prefixed with GED\nconst uniqueKey = \"MATH-\" + Math.floor(100000 + Math.random() * 900000);\n\n// 2. Return just the access code to pass along to Supabase\nreturn {\n  json: {\n    accessCode: uniqueKey\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        896
+      ],
+      "id": "d8f7483b-54c3-48ac-aa6d-08bd13d19374",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "tableId": "CodeDatabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "code",
+              "fieldValue": "={{ $('Code in JavaScript3').item.json.accessCode }}"
+            },
+            {
+              "fieldId": "transaction_id",
+              "fieldValue": "={{ $('Code in JavaScript4').item.json.transaction_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        816
+      ],
+      "id": "d21dc238-2bf8-4d91-a065-467f38ca5568",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JtlIX8KvOqOQUVwe",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.message.photo ? 1 : 0 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        1024
+      ],
+      "id": "51bf7dd9-b6b7-4c23-b946-e7acc8a6bea9",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "လူကြီးမင်းအနေဖြင့် အောက်ပါအကောင့်သို့ ငွေ 3000ကျပ် လွှဲနိုင်ပါသည် \n\n-  💵 KBZ Pay Account:  09679114044\n\n- 👤 Account Name - U Bhone Khant Min\n\nငွေ 3000ကျပ် လွှဲပြီးပါက ငွေလွှဲပြေစာ (Screenshot) ကို ဤ chat သို့ ပြန်လည်ပေးပို့ပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        800
+      ],
+      "id": "0b0fb789-b3e4-451b-a543-b2c95ffebeca",
+      "name": "Send a text message4",
+      "webhookId": "93d55ee7-542a-4c21-b046-e0dd131aebab",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo.slice(-1)[0].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -544,
+        1184
+      ],
+      "id": "38ce6ad9-1545-4a6d-b6a9-0de9abad3be5",
+      "name": "Get a file1",
+      "webhookId": "b20666ce-4892-4c3a-ac6f-8c1f5891f7f5",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen/qwen3.6-27b\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Analyze this screenshot, which may be in English or Myanmar language. It must be a KBZPay (KPay) transfer receipt. Verify four conditions: 1) It is explicitly a KPay receipt. 2) The visible recipient phone number digits (masked, showing only the last 4 digits) must be exactly '4044'. 3) The recipient name must be exactly 'U Bhone Khant Min'. 4) The transferred amount (ငွေလွှဲပမာဏ) must be at least 3,000 MMK or above (check both English numerals like 3,000 / 3000 and Myanmar numerals like ၃,၀၀၀ / ၃၀၀၀). In addition to validating, locate and extract the Transaction ID (လုပ်ဆောင်မှုအမှတ်). You must respond ONLY with a raw JSON object. Do not include ```json blocks, markdown wrappers, or explanations. Use this exact schema: {\\\"status\\\": \\\"VALID\\\", \\\"transaction_id\\\": \\\"EXTRACTED_ID_HERE\\\"} if all conditions pass. If any validation condition fails, return {\\\"status\\\": \\\"INVALID\\\", \\\"transaction_id\\\": \\\"\\\"}.\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"data:image/jpeg;base64,{{ $json.data }}\"\n          }\n        }\n      ]\n    }\n  ],\n  \"reasoning_format\": \"hidden\",\n  \"temperature\": 0,\n  \"max_tokens\": 500\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -208,
+        1088
+      ],
+      "id": "5a012393-3501-4731-8d6e-18998e4974d5",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "dPDIiXmukaAJeOAH",
+          "name": "Multiple Headers Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "26df6baa-0ab2-4a80-8086-0475f3e1b71e",
+              "leftValue": "={{ $json.is_ready }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        1152
+      ],
+      "id": "7f87901d-63e4-4603-981d-934a0ffd6ae4",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        1200
+      ],
+      "id": "f1696130-80a8-447a-aa75-e6a727dba198",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let rawText = $input.item.json.choices[0].message.content.trim();\n\n// Strip away markdown code block wrappers if the AI accidentally sent them\nif (rawText.startsWith(\"```\")) {\n  rawText = rawText.replace(/^```json\\s*/i, \"\").replace(/```$/, \"\").trim();\n}\n\ntry {\n  const groqData = JSON.parse(rawText);\n  return {\n    status: groqData.status || \"INVALID\",\n    transaction_id: groqData.transaction_id || \"\"\n  };\n} catch (error) {\n  // Fallback if the AI completely failed to format JSON\n  return {\n    status: \"INVALID\",\n    transaction_id: \"\",\n    error_details: \"Failed to parse AI response text: \" + rawText\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        1040
+      ],
+      "id": "cab60524-4e46-48d6-9ef6-588a3010315e",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "CodeDatabase",
+        "filterType": "=transaction_id=eq.\"{{ $('Code in JavaScript4').item.json.transaction_id }}\""
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        368,
+        912
+      ],
+      "id": "eeaf8fb4-1910-408c-891f-9434f2ca0cae",
+      "name": "Get many rows2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JtlIX8KvOqOQUVwe",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        1120
+      ],
+      "id": "f9ff33cc-8f26-4c73-929f-f4a96327b74a",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the parsed AI data specifically from the previous parser node\nconst parserData = $('Code in JavaScript4').item.json;\n\n// 2. Get the database results (this node processes the output of 'Get many rows')\nconst dbRows = $input.all();\n\n// 3. Logic: Check if status is \"VALID\"\nconst isInvalid = parserData.status !== \"VALID\";\n\n// 4. Logic: Check for duplicates\n// We only check for duplicates if we actually have a transaction_id\nconst isDuplicate = parserData.transaction_id && \n                    dbRows.some(row => row.json.transaction_id === parserData.transaction_id);\n\n// 5. Decision: Proceed ONLY if it is VALID and NOT a duplicate\nconst shouldProceed = !isInvalid && !isDuplicate;\n\n// 6. Return a single object\nreturn [{\n  json: {\n    ...parserData, \n    is_ready: shouldProceed\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        1088
+      ],
+      "id": "1fdf0c47-88f4-409e-b21a-09f3e83025a2",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "သင်ပေးပို့လိုက်သော ငွေလွှဲပြေစာသည် မှန်ကန်မှုမရှိပါ သို့မဟုတ် ယခင်က တင်ပြထားပြီးဖြစ်ပါသည်။ ကျေးဇူးပြု၍ နောက်တစ်ကြိမ် ထပ်မံကြိုးစားကြည့်ပေးပါ။",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        928,
+        1280
+      ],
+      "id": "e215817d-efa6-49b0-8ec3-a576be9abd36",
+      "name": "Send a text message5",
+      "webhookId": "93d55ee7-542a-4c21-b046-e0dd131aebab",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "CodeDatabase",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=code=eq.{{ $('Code in JavaScript3').item.json.accessCode }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        896
+      ],
+      "id": "5ad3f7d6-5def-4708-b315-23778a9550b1",
+      "name": "Get many rows3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "JtlIX8KvOqOQUVwe",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1857abef-9eb0-4b57-b86c-87e9581d892f",
+              "leftValue": "={{ $('Get many rows3').item.json.code }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        896
+      ],
+      "id": "e9157cbb-0960-4928-9f41-32f885923a37",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "chatId": "=8548023779",
+        "text": "⚠️ Duplicate Code Detected!\n\nThe following code already exists in the database:\nCode: {{ $('Code in JavaScript').item.json.accessCode }}\n\nRequested by user: @{{ $('Telegram Trigger1').item.json.message.from.username }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        1008
+      ],
+      "id": "3ea491ed-e34f-45ab-bdab-93b06a2e5ed8",
+      "name": "Send a text message6",
+      "webhookId": "93d55ee7-542a-4c21-b046-e0dd131aebab",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=ငွေပေးချေမှု အောင်မြင်ပါသည်။ 🎉\nအောက်ပါကုဒ်ကို အသုံးပြု၍ ဝဘ်ဆိုက်တွင် ယခု Verify နိုင်ပါပြီ-\n\nကုဒ်: {{ $('Code in JavaScript3').item.json.accessCode }} \n\nWebsite - <a href=\"https://bit-by-bit-website-drab.vercel.app/mainpage.html\">BitByBit.com</a>\n\nဝယ်ယူအားပေးမှုအတွက် ကျေးဇူးတင်ပါသည်။\n(Error တစ်ခုခုရှိပါက developer ကိုဆက်သွယ်ရန် tg - @auxilius_a2)",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        832
+      ],
+      "id": "c9f7a474-5730-4ac4-9579-0060d559f0ef",
+      "name": "Send a text message7",
+      "webhookId": "04d946a2-f6d1-4e4b-b083-44fbf1240bf4",
+      "credentials": {
+        "telegramApi": {
+          "id": "HB5mvzMX3hb0IWId",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Get many rows3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Get many rows2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "fa532f4b-58cd-427e-94b6-d8776a476ed5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bce7db6981addf5abeae5be87bf79c57c96e0679ecd4468668f2f6c058dc8040"
+  },
+  "nodeGroups": [],
+  "id": "iCmhujJyk0Gmm3XD",
+  "tags": []
+}
