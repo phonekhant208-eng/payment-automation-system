@@ -1,6 +1,6 @@
 # ⚡ Automated Payment Verification & Code Activation System
 
-An automated backend service built with **n8n**, **Groq Vision AI**, and **Supabase**. This system captures payment receipt screenshots via a Telegram bot, extracts transaction details using Vision OCR, validates payments against a Supabase database to prevent double-spending, and automatically delivers single-use activation codes to users.
+An automated backend service built with **n8n**, **Groq Vision AI**, and **Supabase**. This system receives payment receipt screenshots via a Telegram bot, extracts transaction details using Vision OCR, executes multi-stage fraud checks, and delivers single-use activation codes.
 
 ---
 
@@ -9,11 +9,19 @@ An automated backend service built with **n8n**, **Groq Vision AI**, and **Supab
 ![n8n Payment Workflow](./workflow-diagram.png)
 
 ### Workflow Breakdown
-1. **Telegram Listener:** Listens for incoming user payment slips and commands via `Telegram Trigger`.
-2. **File Processing & OCR:** Downloads receipt images, converts them to base64, and sends them to the **Groq AI Vision API** (`llama-3.2-11b-vision-preview`) for instant OCR extraction (Transaction ID, Amount, Timestamp).
-3. **Fraud Detection & DB Check:** Queries the **Supabase** database (`Get many rows`) to verify if the Transaction ID has already been claimed or if the amount matches the required fee.
-4. **Logic Evaluation:** Executes JavaScript validation logic (`If` nodes) to confirm transaction authenticity.
-5. **Activation & Response:** Generates an activation record in Supabase (`Create a row`) and dispatches the activation key back to the user via Telegram (`Send a text message`).
+
+1. **Telegram Listener:** Listens for incoming payment receipt screenshots and user commands via `Telegram Trigger`.
+2. **File Processing & OCR:** Downloads receipt images, converts them to base64, and queries the **Groq AI Vision API** (`llama-3.2-11b-vision-preview`) to extract Transaction ID, Amount, Timestamp, and Recipient Info.
+3. **Multi-Condition Fraud Detection:**
+   Validates extracted receipt data against **4 mandatory verification checks**:
+   * **Transaction ID Uniqueness:** Queries Supabase (`Get many rows`) to ensure the receipt hasn't been used before (prevents double-spending).
+   * **Recipient Phone Number:** Verifies the last 4 digits of the recipient mobile number match the merchant target.
+   * **Exact Account Name:** Confirms the recipient account name matches the target account exactly.
+   * **Payment Amount:** Validates that the transferred amount matches the required fee.
+4. **Collision Handling & Admin Alerts:**
+   * Generates a random activation key and checks for duplicates in the database.
+   * **Collision Prevention:** If a generated key matches an existing record in Supabase, the workflow halts activation and sends an instant Telegram alert to the admin (*"Duplicated code detected"*).
+5. **Activation & Delivery:** Records the verified activation in Supabase (`Create a row`) and sends the activation key directly to the user via Telegram (`Send a text message`).
 
 ---
 
@@ -21,23 +29,23 @@ An automated backend service built with **n8n**, **Groq Vision AI**, and **Supab
 
 * **Automation Engine:** [n8n](https://n8n.io/) (Self-hosted on Docker / Ubuntu)
 * **OCR / Vision AI:** Groq API (`llama-3.2-11b-vision-preview`)
-* **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL with Row Level Security)
-* **Communication Interface:** Telegram Bot API
-* **Frontend Integration:** [View Frontend Repository](https://github.com/phonekhant208-eng/BitByBitWebsite)
+* **Database & Security:** [Supabase](https://supabase.com/) (PostgreSQL with RLS & RPC functions)
+* **Interface:** Telegram Bot API
+* **Frontend Application:** [View Frontend Repository](https://github.com/phonekhant208-eng/BitByBitWebsite)
 
 ---
 
-## 🔒 Environment Variables & Credentials Setup
+## 🔒 Environment Variables & Credentials
 
-To run this workflow, configure the following secrets within your n8n credentials manager:
+Configure the following credentials within your n8n credentials manager:
 
 | Credential Name | Service | Purpose |
 | :--- | :--- | :--- |
-| `telegramApi` | Telegram Bot | Receives slips & sends activation codes |
-| `groqApi` | Groq AI | Vision OCR for payment slip parsing |
-| `supabaseApi` | Supabase DB | Payment verification & activation code storage |
+| `telegramApi` | Telegram Bot | Receives receipt slips & sends user/admin messages |
+| `groqApi` | Groq AI | Vision OCR for receipt slip parsing |
+| `supabaseApi` | Supabase DB | Verification check & code activation storage |
 
-> **Note:** Never commit raw API keys or active database credentials to GitHub.
+> **Security Note:** Never commit raw API keys, active database secrets, or webhook URLs directly to GitHub repository files.
 
 ---
 
