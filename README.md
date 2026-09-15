@@ -6,7 +6,9 @@ An automated backend service built with **n8n**, **Groq Vision AI**, and **Supab
 
 ## 📐 System Architecture
 
-![n8n Payment Workflow](./workflow-diagram.png)
+![n8n Payment Workflow](https://github.com/user-attachments/assets/a34725fe-2f5c-4e97-a823-ed95a10d8bc1)
+
+
 
 ### Workflow Breakdown
 
