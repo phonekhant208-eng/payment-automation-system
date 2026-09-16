@@ -51,7 +51,7 @@ Configure the following credentials within your n8n credentials manager:
 
 ---
 
-## 🚀 How to Import & Run
+##  How to Import & Run
 
 1. Clone this repository:
    ```bash
