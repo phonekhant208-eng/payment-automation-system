@@ -1,10 +1,10 @@
-# ⚡ Automated Payment Verification & Code Activation System
+#  Automated Payment Verification & Code Activation System
 
 An automated backend service built with **n8n**, **Groq Vision AI**, and **Supabase**. This system receives payment receipt screenshots via a Telegram bot, extracts transaction details using Vision OCR, executes multi-stage fraud checks, and delivers single-use activation codes.
 
 ---
 
-## 📐 System Architecture
+## System Architecture
 
 ![n8n Payment Workflow](https://github.com/user-attachments/assets/a34725fe-2f5c-4e97-a823-ed95a10d8bc1)
 
@@ -27,7 +27,7 @@ An automated backend service built with **n8n**, **Groq Vision AI**, and **Supab
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 * **Automation Engine:** [n8n](https://n8n.io/) (Self-hosted on Docker / Ubuntu)
 * **OCR / Vision AI:** Groq API (`llama-3.2-11b-vision-preview`)
@@ -37,7 +37,7 @@ An automated backend service built with **n8n**, **Groq Vision AI**, and **Supab
 
 ---
 
-## 🔒 Environment Variables & Credentials
+##  Environment Variables & Credentials
 
 Configure the following credentials within your n8n credentials manager:
 
